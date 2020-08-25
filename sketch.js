@@ -17,12 +17,16 @@ let brushSize, brushSizeSlider;
 let saveButton;
 let editLayerSlider;
 let gridCheckbox;
-let imageInput;
+let tools = [];
 let textures = [];
+let c = document.createElement("canvas");
 
 function preload() {
   for (let i = 0; i < 1; i++) {
-    textures[i] = loadImage("assets/tool-" + i + ".png");
+    tools[i] = loadImage("assets/tools/tool-" + i + ".png");
+  }
+  for (let i = 0; i < 1; i++) {
+    textures[i] = loadImage("assets/textures/texture-" + i + ".png");
   }
 }
 
@@ -54,6 +58,7 @@ function setup() {
     layerCheckboxes[i].parent("settingsDiv");
   }
 
+    //grid checkbox
   gridCheckbox = createCheckbox("show grid", true);
   select("#settingsText").parent("settingsDiv");
   gridCheckbox.parent("settingsDiv");
@@ -64,11 +69,17 @@ function setup() {
   select("#editLayerText").parent("editLayerDiv")
   positionElement("editLayerDiv", 0 + 160, height);
 
+  positionElement("imageDiv", 20, height+200)
+  for (let i = 0; i < textures.length; i++) {
 
-  imageInput = createFileInput(storeImage);
-  imageInput.position(20, height + 100)
-  positionElement("imageDiv", 20, height + 200)
-
+    img = textures[i];
+    let src = drawImage("imageDiv", img).src;
+    domImg = createImg(src, "");
+    domImg.parent("imageDiv");
+    domImg.mousePressed(() => {
+      currentTexture = img;
+    })
+  }
 
   //declare/assign variables and arrays
   tileWidth = width / res;
@@ -77,7 +88,7 @@ function setup() {
     h: height / tileWidth
   }
 
-  currentTexture = textures[0];
+  currentTexture = tools[0];
 
   for (let i = 0; i < layers.length; i++) {
     layers[i] = twoDGrid(gridRes.w, gridRes.h);
@@ -116,16 +127,6 @@ function renderLayers() {
 function positionElement(id, x_, y_) {
   element = select("#" + id);
   element.position(x_, y_);
-}
-
-function getElementValues(e_) {
-  let returnValues = {
-    x: e_.position().x,
-    y: e_.position().y,
-    width: e_.size().width,
-    height: e_.size().height
-  };
-  return returnValues;
 }
 
 function renderLayer(layer_) {
@@ -245,22 +246,30 @@ function drawGrid(cols_, rows_, step_) {
   }
 }
 
-function storeImage(file) {
-  if (file.type == "image") {
-    let img = createImg(file.data, file.name);
-    img.size(12, 12);
-    img.parent("imageDiv");
-    img.mousePressed(() => {
-      currentTexture = img;
-    })
-  }
-}
-
 function keyPressed() {
   if (key == "d") {
-    currentTexture = textures[0]
+    currentTexture = tools[0]
   } else if (key == "e") {
     currentTexture = 0;
   }
-  print(currentTexture)
+}
+
+function drawImage(id, img) {
+  c.width = img.width; //setting the canvas width and height to the img
+  c.height = img.height;
+
+  let ctx = c.getContext("2d"); //allows you to draw stuff on the canvas
+  img.loadPixels();
+  let data = new ImageData(img.pixels, img.width, img.height);
+  ctx.putImageData(data, 0, 0); //drawing the images pixel data onto the canvas
+
+  let url = c.toDataURL(); //turning the canvas to a url
+
+  let newImage = new Image(); //creating a DOM image
+  newImage.src = url; //setting the image url to the new url
+
+  // let test = document.getElementById(id)
+  // test.append(newImage) //putting the image on the html element
+
+  return newImage;
 }
